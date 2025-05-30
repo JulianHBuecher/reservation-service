@@ -1,0 +1,19 @@
+networks:
+  reservations:
+
+services:
+  # Keycloak wird als Identitäts- und Zugriffsmanagementlösung verwendet.
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - '8080:8080'
+    networks:
+      - reservations
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+
+volumes:
+  keycloak_data:

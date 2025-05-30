@@ -1,0 +1,51 @@
+networks:
+  reservations:
+
+services:
+  # Datenbank-Server für die Reservierungsanwendung.
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: reservations
+    ports:
+      - '5432:5432'
+    networks:
+      - reservations
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgresql/init:/docker-entrypoint-initdb.d
+
+  # pgAdmin kann für die Verwaltung der PostgreSQL-Datenbank verwendet werden.
+  # Weitere Informationen zur Verwendung von pgAdmin in Docker finden Sie unter:
+  # https://www.codeproject.com/Tips/5336563/Run-Database-and-GUI-Clients-in-Docker
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    ports:
+      - '5050:80'
+    depends_on:
+      - postgres
+    networks:
+      - reservations
+    volumes:
+      - ./pgadmin/reservations-db.json:/pgadmin4/servers.json
+
+  # Flyway wird verwendet, um Datenbankmigrationen zu verwalten.
+  # Weitere Informationen zur Verwendung von Flyway in Docker finden Sie unter:
+  # https://documentation.red-gate.com/fd/getting-started-with-flyway-184127223.html
+  flyway:
+    image: flyway/flyway:latest
+    command: -url=jdbc:postgresql://postgres:5432/reservations -user=flyway -password=flyway -connectRetries=60 migrate
+    volumes:
+      - ./postgresql:/flyway/sql
+    depends_on:
+      - postgres
+    networks:
+      - reservations
+
+volumes:
+  postgres_data:

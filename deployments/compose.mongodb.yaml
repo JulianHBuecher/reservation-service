@@ -1,0 +1,53 @@
+networks:
+  reservations:
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: reservations
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb/init:/docker-entrypoint-initdb.d
+    networks:
+      - reservations
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_SERVER_PORT: 27017
+      ME_CONFIG_BASICAUTH: false
+    ports:
+      - '8081:8081'
+    depends_on:
+      - mongodb
+    networks:
+      - reservations
+
+  # Flyway wird verwendet, um Datenbankmigrationen zu verwalten.
+  # Weitere Informationen zur Verwendung von Flyway in Docker finden Sie unter:
+  # https://documentation.red-gate.com/fd/getting-started-with-flyway-184127223.html
+  flyway:
+    image: flyway/flyway:11-alpine-mongo
+    command: -url=jdbc:mongodb://mongodb:27017/reservations?authSource=reservations -user=flyway -password=flyway -connectRetries=60 migrate
+    volumes:
+      - ./mongodb:/flyway/sql
+      - ./flyway/config:/flyway/conf
+    depends_on:
+      - mongodb
+    networks:
+      - reservations
+
+volumes:
+  mongodb_data:

@@ -1,0 +1,8 @@
+{
+  email julian.buecher@gmx.de
+}
+localhost:8080 {
+	# reverse_proxy /api/* localhost:9001
+	file_server
+  tls internal
+}

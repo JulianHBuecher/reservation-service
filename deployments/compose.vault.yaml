@@ -1,0 +1,27 @@
+# Based on: https://ambar-thecloudgarage.medium.com/hashicorp-vault-with-docker-compose-0ea2ce1ca5ab
+
+networks:
+  reservations:
+
+services:
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
+    environment:
+      VAULT_UI: true
+      VAULT_TOKEN: secret
+    ports:
+      - '8200:8200'
+      - '8201:8201'
+    restart: always
+    volumes:
+      - ./vault/logs:/vault/logs
+      - ./vault/data:/vault/data
+      - ./vault/config:/vault/config
+      - ./vault/certs:/certs
+      - ./vault/file:/vault/file
+    cap_add:
+      - IPC_LOCK # https://developer.hashicorp.com/vault/docs/configuration#disable_mlock
+    entrypoint: vault server -config /vault/config/config.hcl
+    networks:
+      - reservations
